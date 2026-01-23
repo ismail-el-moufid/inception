@@ -22,6 +22,7 @@ WORKDIR /var/www/html/
 
 COPY conf/wp-config.php /var/www/html/wp-config.php
 COPY conf/www.conf /etc/php83/php-fpm.d/www.conf
+COPY conf/php-fpm.conf /etc/php83/php-fpm.conf
 
 RUN wget https://wordpress.org/wordpress-6.9.tar.gz && \
 	tar -xzf wordpress-6.9.tar.gz && \

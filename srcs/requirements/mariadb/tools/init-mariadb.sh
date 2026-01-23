@@ -34,19 +34,18 @@ if [ ! -d "$DATA_DIR/mysql" ]; then
 		echo "$output" 1>&2
 	fi
 
-	# Init DB using bootstrap mode
+	# Init DB
 	output=$( mariadbd \
-		--user=mysql \
 		--datadir="$DATA_DIR" \
 		--socket="$SOCKET" \
-		--bootstrap <<- EOF
-			FLUSH PRIVILEGES;
-			CREATE DATABASE IF NOT EXISTS `${DB_NAME}`;
-			CREATE USER IF NOT EXISTS '${DB_USER}'@'${DB_CLIENT_HOST}' IDENTIFIED BY '${DB_PASSWORD}';
-			GRANT ALL PRIVILEGES ON `${DB_NAME}`.* TO '${DB_USER}'@'${DB_CLIENT_HOST}';
-			ALTER USER 'root'@'localhost' IDENTIFIED BY '${ROOT_PASSWORD}';
-			FLUSH PRIVILEGES;
-		EOF
+		--bootstrap <<EOF
+FLUSH PRIVILEGES;
+CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\`;
+CREATE USER IF NOT EXISTS '${DB_USER}'@'${DB_CLIENT_HOST}' IDENTIFIED BY '${DB_PASSWORD}';
+GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'${DB_CLIENT_HOST}';
+ALTER USER 'root'@'localhost' IDENTIFIED BY '${ROOT_PASSWORD}';
+FLUSH PRIVILEGES;
+EOF
 	)
 
 	if [ $? -eq 0 ]; then
@@ -62,7 +61,5 @@ fi
 
 # Run server as PID 1
 exec mariadbd \
-	--user=mysql \
 	--datadir="$DATA_DIR" \
-	--socket="$SOCKET" \
-	--bind-address=0.0.0.0
+	--socket="$SOCKET"
