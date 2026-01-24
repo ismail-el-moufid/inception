@@ -4,5 +4,4 @@
 
 # this is only for the mysqld standalone daemon
 [mysqld]
-user=mysql
 bind-address=0.0.0.0

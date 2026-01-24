@@ -2,46 +2,90 @@ services:
   mariadb:
     build:
       context: requirements/mariadb
+    image: mariadb
     container_name: mariadb
     environment:
-      DB_NAME: wordpress
-      DB_USER: wordpress
-      DB_PASSWORD: wordpress_password
-      DB_CLIENT_HOST: "%"
-      ROOT_PASSWORD: root_password
-    ports:
-      - "3306:3306"
+      DB_NAME: ${WP_DB_NAME}
+      DB_USER: ${WP_DB_USER}
+      DB_PASSWORD: ${WP_DB_PASSWORD}
+      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      DB_CLIENT: wordpress
     volumes:
-      - mariadb_data:/var/lib/mysql
+      - mariadb:/var/lib/mysql
     networks:
       - inception
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "sh", "-c", "mariadb-admin ping -h localhost -u root -p$DB_ROOT_PASSWORD || mariadb-admin ping -h localhost -u root"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   wordpress:
     build:
       context: requirements/wordpress
+    image: wordpress
     container_name: wordpress
     environment:
-      DB_NAME: wordpress
-      DB_USER: wordpress
-      DB_PASSWORD: wordpress_password
+      DB_NAME: ${WP_DB_NAME}
+      DB_USER: ${WP_DB_USER}
+      DB_PASSWORD: ${WP_DB_PASSWORD}
       DB_HOST: mariadb
-      AUTH_KEY: test_key
-      SECURE_AUTH_KEY: test_key
-      LOGGED_IN_KEY: test_key
-      NONCE_KEY: test_key
-      AUTH_SALT: test_salt
-      SECURE_AUTH_SALT: test_salt
-      LOGGED_IN_SALT: test_salt
-      NONCE_SALT: test_salt
-    ports:
-      - "9000:9000"
+      ADMIN_USER: ${WP_ADMIN_USER}
+      ADMIN_PASSWORD: ${WP_ADMIN_PASSWORD}
+      ADMIN_EMAIL: ${WP_ADMIN_EMAIL}
+      NON_ADMIN_USER: ${WP_NON_ADMIN_USER}
+      NON_ADMIN_PASSWORD: ${WP_NON_ADMIN_PASSWORD}
+      SITE_URL: https://${DOMAIN_NAME}
+      SITE_TITLE: ${WP_SITE_TITLE}
+      AUTH_KEY: ${WP_AUTH_KEY}
+      SECURE_AUTH_KEY: ${WP_SECURE_AUTH_KEY}
+      LOGGED_IN_KEY: ${WP_LOGGED_IN_KEY}
+      NONCE_KEY: ${WP_NONCE_KEY}
+      AUTH_SALT: ${WP_AUTH_SALT}
+      SECURE_AUTH_SALT: ${WP_SECURE_AUTH_SALT}
+      LOGGED_IN_SALT: ${WP_LOGGED_IN_SALT}
+      NONCE_SALT: ${WP_NONCE_SALT}
     depends_on:
-      - mariadb
+      mariadb:
+        condition: service_healthy
+    volumes:
+      - wordpress:/var/www/html
     networks:
       - inception
+    restart: unless-stopped
+
+  nginx:
+    build:
+      context: requirements/nginx
+    image: nginx
+    container_name: nginx
+    environment:
+      - DOMAIN_NAME=${DOMAIN_NAME}
+    ports:
+      - "443:443"
+    depends_on:
+      - wordpress
+    volumes:
+      - wordpress:/var/www/html
+    networks:
+      - inception
+    restart: unless-stopped
 
 volumes:
-  mariadb_data:
+  mariadb:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/isel-mou/data/mariadb
+  wordpress:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/isel-mou/data/wordpress
 
 networks:
   inception:
+    driver: bridge
