@@ -5,32 +5,38 @@ services:
     image: mariadb
     container_name: mariadb
     environment:
+      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      DB_CLIENT: ${WP_HOST}.${NETWORK}
       DB_NAME: ${WP_DB_NAME}
       DB_USER: ${WP_DB_USER}
       DB_PASSWORD: ${WP_DB_PASSWORD}
-      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      DB_CLIENT: wordpress
     volumes:
       - mariadb:/var/lib/mysql
-    networks:
-      - inception
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "sh", "-c", "mariadb-admin ping -h localhost -u root -p$DB_ROOT_PASSWORD || mariadb-admin ping -h localhost -u root"]
-      interval: 10s
+      interval: 2s
       timeout: 5s
-      retries: 5
+      retries: 20
+    networks:
+      - backend
 
   wordpress:
     build:
       context: requirements/wordpress
     image: wordpress
     container_name: wordpress
+    hostname: wordpress
     environment:
+    # DB settings
+      DB_HOST: ${WP_DB_HOST}
       DB_NAME: ${WP_DB_NAME}
       DB_USER: ${WP_DB_USER}
       DB_PASSWORD: ${WP_DB_PASSWORD}
-      DB_HOST: mariadb
+    # Redis settings
+      REDIS_HOST: ${WP_REDIS_HOST}
+      REDIS_PORT: ${WP_REDIS_PORT}
+    # User & Site settings
       ADMIN_USER: ${WP_ADMIN_USER}
       ADMIN_PASSWORD: ${WP_ADMIN_PASSWORD}
       ADMIN_EMAIL: ${WP_ADMIN_EMAIL}
@@ -38,6 +44,7 @@ services:
       NON_ADMIN_PASSWORD: ${WP_NON_ADMIN_PASSWORD}
       SITE_URL: https://${DOMAIN_NAME}
       SITE_TITLE: ${WP_SITE_TITLE}
+    # Security keys
       AUTH_KEY: ${WP_AUTH_KEY}
       SECURE_AUTH_KEY: ${WP_SECURE_AUTH_KEY}
       LOGGED_IN_KEY: ${WP_LOGGED_IN_KEY}
@@ -49,11 +56,20 @@ services:
     depends_on:
       mariadb:
         condition: service_healthy
+      redis:
+        condition: service_started
     volumes:
       - wordpress:/var/www/html
-    networks:
-      - inception
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "9000"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      backend:
+        aliases:
+          - ${WP_HOST}
 
   nginx:
     build:
@@ -65,11 +81,38 @@ services:
     ports:
       - "443:443"
     depends_on:
-      - wordpress
+      wordpress:
+        condition: service_healthy
     volumes:
       - wordpress:/var/www/html
+    restart: unless-stopped
     networks:
-      - inception
+      backend:
+        aliases:
+          - ${DOMAIN_NAME}
+
+  redis:
+    image: redis
+    build:
+      context: requirements/bonus/redis
+    container_name: redis
+    restart: unless-stopped
+    networks:
+      - backend
+
+  ftp:
+    build:
+      context: requirements/bonus/ftp
+    image: ftp
+    container_name: ftp
+    environment:
+      USERNAME: ${FTP_USER}
+      PASSWORD: ${FTP_PASSWORD}
+    ports:
+      - "127.0.0.1:21:21"
+      - "127.0.0.1:10000-10100:10000-10100"
+    volumes:
+      - wordpress:/home/${FTP_USER}
     restart: unless-stopped
 
 volumes:
@@ -87,5 +130,5 @@ volumes:
       device: /home/isel-mou/data/wordpress
 
 networks:
-  inception:
-    driver: bridge
+  backend:
+    name: ${NETWORK}

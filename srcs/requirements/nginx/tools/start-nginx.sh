@@ -10,5 +10,8 @@ if [ ! -f "/etc/nginx/ssl/server.crt" ] || [ ! -f "/etc/nginx/ssl/server.key" ];
 		-out "/etc/nginx/ssl/server.crt"
 fi
 
+# Replace placeholder in nginx configuration with actual domain name
+sed -i "s|DOMAIN_NAME_PLACEHOLDER|${DOMAIN_NAME}|g" /etc/nginx/nginx.conf
+
 # Start nginx
-exec nginx -g "daemon off;"
+exec nginx

@@ -21,20 +21,23 @@ chown -R mysql:mysql "$SOCKET_DIR"
 
 SOCKET="$SOCKET_DIR/$SOCKET_NAME"
 
+# Ensure data directory permissions
+chown -R mysql:mysql "$DATA_DIR"
+chmod 777 "$DATA_DIR"
+
 # 1. Initialize system tables if they don't exist
 if [ ! -d "$DATA_DIR/mysql" ]; then
 	echo "Initializing MariaDB system tables..."
 
-	# Ensure data directory permissions
-	chown -R mysql:mysql "$DATA_DIR"
-	chmod 777 "$DATA_DIR"
+	
 
 	output=$(mariadb-install-db --user=mysql --datadir="$DATA_DIR" --skip-test-db 2>&1)
 	if [ $? -eq 0 ]; then
 		echo "MariaDB system tables initialized successfully."
 	else
 		echo "Error initializing MariaDB system tables:"
-		echo "$output"
+		echo "$output" 1>&2
+		rm -rf "$DATA_DIR/mysql"
 		exit 1
 	fi
 fi
@@ -60,4 +63,5 @@ echo "Starting MariaDB server..."
 exec mariadbd \
 	--user=mysql \
 	--datadir="$DATA_DIR" \
-	--socket="$SOCKET"
+	--socket="$SOCKET" \
+	--port=3306

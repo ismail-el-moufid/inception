@@ -1,11 +1,16 @@
 FROM alpine:3.23.2
 
 RUN apk update && apk add --no-cache \
+	su-exec=0.3-r0 \
 	mariadb-client=11.4.9-r0 \
 	php83=8.3.30-r0 \
 	php83-phar=8.3.30-r0 \
 	php83-fpm=8.3.30-r0 \
 	php83-mysqli=8.3.30-r0 \
+	php83-dom=8.3.30-r0 \
+    php83-exif=8.3.30-r0 \
+    php83-intl=8.3.30-r0 \
+    php83-pecl-imagick=3.8.1-r0 \
 	php83-pdo=8.3.30-r0 \
 	php83-pdo_mysql=8.3.30-r0 \
 	php83-openssl=8.3.30-r0 \
