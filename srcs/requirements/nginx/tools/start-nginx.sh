@@ -13,5 +13,8 @@ fi
 # Replace placeholder in nginx configuration with actual domain name
 sed -i "s|DOMAIN_NAME_PLACEHOLDER|${DOMAIN_NAME}|g" /etc/nginx/nginx.conf
 
+# Ensure the cache directory exists
+mkdir -p /var/cache/nginx
+
 # Start nginx
 exec nginx

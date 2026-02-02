@@ -5,8 +5,13 @@ services:
     image: mariadb
     container_name: mariadb
     environment:
+      HOST_UID: ${HOST_UID}
+      HOST_GID: ${HOST_GID}
       DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      DB_CLIENT: ${WP_HOST}.${NETWORK}
+      DB_ADMIN: ${ADMINER_USER}
+      DB_ADMIN_PASSWORD: ${ADMINER_PASSWORD}
+      DB_ADMIN_CLIENT: adminer.inception
+      DB_CLIENT: wordpress.inception
       DB_NAME: ${WP_DB_NAME}
       DB_USER: ${WP_DB_USER}
       DB_PASSWORD: ${WP_DB_PASSWORD}
@@ -14,10 +19,10 @@ services:
       - mariadb:/var/lib/mysql
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "sh", "-c", "mariadb-admin ping -h localhost -u root -p$DB_ROOT_PASSWORD || mariadb-admin ping -h localhost -u root"]
+      test: ["CMD", "sh", "-c", "mariadb-admin ping --socket=/var/lib/mysql/sockets/mysqld.sock -u root -p$DB_ROOT_PASSWORD || mariadb-admin ping --socket=/var/lib/mysql/sockets/mysqld.sock -u root"]
       interval: 2s
       timeout: 5s
-      retries: 20
+      retries: 30
     networks:
       - backend
 
@@ -28,14 +33,17 @@ services:
     container_name: wordpress
     hostname: wordpress
     environment:
+    # Set host UID/GID to match host user for proper file permissions
+      HOST_UID: ${HOST_UID}
+      HOST_GID: ${HOST_GID}
     # DB settings
-      DB_HOST: ${WP_DB_HOST}
+      DB_HOST: mariadb
       DB_NAME: ${WP_DB_NAME}
       DB_USER: ${WP_DB_USER}
       DB_PASSWORD: ${WP_DB_PASSWORD}
     # Redis settings
-      REDIS_HOST: ${WP_REDIS_HOST}
-      REDIS_PORT: ${WP_REDIS_PORT}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     # User & Site settings
       ADMIN_USER: ${WP_ADMIN_USER}
       ADMIN_PASSWORD: ${WP_ADMIN_PASSWORD}
@@ -69,7 +77,7 @@ services:
     networks:
       backend:
         aliases:
-          - ${WP_HOST}
+          - wordpress
 
   nginx:
     build:
@@ -106,6 +114,8 @@ services:
     image: ftp
     container_name: ftp
     environment:
+      HOST_UID: ${HOST_UID}
+      HOST_GID: ${HOST_GID}
       USERNAME: ${FTP_USER}
       PASSWORD: ${FTP_PASSWORD}
     ports:
@@ -115,20 +125,51 @@ services:
       - wordpress:/home/${FTP_USER}
     restart: unless-stopped
 
+  docs:
+    build:
+      context: requirements/bonus/docs
+    image: docs
+    container_name: docs
+    restart: unless-stopped
+    networks:
+      - backend
+
+  adminer:
+    build:
+      context: requirements/bonus/adminer
+    image: adminer
+    container_name: adminer
+    restart: unless-stopped
+    networks:
+      backend:
+        aliases:
+          - adminer
+
+  dozzle:
+    build:
+      context: requirements/bonus/dozzle
+    image: dozzle
+    container_name: dozzle
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+    - "127.0.0.1:80:8081"
+
 volumes:
   mariadb:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /home/isel-mou/data/mariadb
+      device: ${DATA_DIR}/mariadb
   wordpress:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /home/isel-mou/data/wordpress
+      device: ${DATA_DIR}/wordpress
 
 networks:
   backend:
-    name: ${NETWORK}
+    name: inception

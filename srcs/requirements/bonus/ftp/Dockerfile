@@ -8,4 +8,4 @@ RUN chmod +x /start-pure-ftpd.sh
 
 ENTRYPOINT ["/start-pure-ftpd.sh"]
 
-EXPOSE 20 10000-10100
+EXPOSE 21 10000-10100

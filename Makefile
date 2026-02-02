@@ -1,52 +1,66 @@
 all: up
 
-MANDATORY_SERVICES = nginx mariadb wordpress redis
-BONUS_SERVICES = ftp
+MANDATORY_SERVICES = nginx mariadb wordpress redis docs adminer
+BONUS_SERVICES = ftp dozzle
+
+UID = $(shell id -u)
+GID = $(shell id -g)
+
+# Prevent running services as root
+ifeq ($(UID),0)
+UID = 1000
+GID = 1000
+endif
+
+DOCKER_COMPOSE = HOST_UID=${UID} HOST_GID=${GID} docker compose
+
+-include srcs/.env
 
 # Build and start all containers
 up: build
 	@echo "Creating volume directories..."
-	@mkdir -p /home/isel-mou/data/mariadb
-	@mkdir -p /home/isel-mou/data/wordpress
-	@sudo chown -R 1000:1000 /home/isel-mou/data/wordpress
+	@mkdir -p "$(DATA_DIR)/mariadb"
+	@mkdir -p "$(DATA_DIR)/wordpress"
+	@cp README.md srcs/requirements/bonus/docs/index.md
 	@echo "starting Docker services..."
-	@cd srcs && docker compose up -d $(MANDATORY_SERVICES)
+	@cd srcs && ${DOCKER_COMPOSE} up -d $(MANDATORY_SERVICES)
 	@echo "✓ Services are up and running"
 
 # Build images without starting containers
 build:
 	@echo "Building Docker images..."
-	@cd srcs && docker compose build --parallel $(MANDATORY_SERVICES)
+	@cd srcs && ${DOCKER_COMPOSE} build --parallel $(MANDATORY_SERVICES)
 	@echo "✓ Images built successfully"
 
 # Stop and remove containers
 down:
-	@echo "Stopping all containers..."
-	@cd srcs && docker compose down
+	@echo "Stopping and removing all containers..."
+	@cd srcs && ${DOCKER_COMPOSE} down
 	@echo "✓ Services stopped and removed"
 
 stop:
 	@echo "Stopping containers..."
-	@cd srcs && docker compose stop
+	@cd srcs && ${DOCKER_COMPOSE} stop
 	@echo "✓ Services stopped"
 
 start:
 	@echo "Starting containers..."
-	@cd srcs && docker compose start
+	@cd srcs && ${DOCKER_COMPOSE} start
 	@echo "✓ Services started"
 
+# Stop, remove and restart all containers
 restart: down up
 	@echo "✓ Services restarted"
 
 logs:
-	@cd srcs && docker compose logs -f
+	@cd srcs && ${DOCKER_COMPOSE} logs -f
 
 clean: down
 
 # Remove containers, images, and volumes
 fclean:
-	@echo "Cleaning up all resources (images, volumes, data)..."
-	@cd srcs && docker compose down --rmi all -v
+	@echo "Cleaning up all resources (containers, images, volumes)..."
+	@cd srcs && ${DOCKER_COMPOSE} down --rmi all -v
 	@echo "✓ Full cleanup completed"
 
 # Rebuild everything from scratch
@@ -55,15 +69,16 @@ re: fclean up
 
 build_bonus:
 	@echo "Building bonus service images..."
-	@cd srcs && docker compose build $(MANDATORY_SERVICES) $(BONUS_SERVICES)
+	@cd srcs && ${DOCKER_COMPOSE} build --parallel $(MANDATORY_SERVICES) $(BONUS_SERVICES)
 	@echo "✓ Bonus images built successfully"
 
 bonus: build_bonus
 	@echo "Creating volume directories..."
-	@mkdir -p /home/isel-mou/data/mariadb
-	@mkdir -p /home/isel-mou/data/wordpress
+	@mkdir -p "$(DATA_DIR)/mariadb"
+	@mkdir -p "$(DATA_DIR)/wordpress"
+	@cp README.md srcs/requirements/bonus/docs/index.md
 	@echo "Starting bonus services..."
-	@cd srcs && docker compose up -d $(MANDATORY_SERVICES) $(BONUS_SERVICES)
+	@cd srcs && ${DOCKER_COMPOSE} up -d $(MANDATORY_SERVICES) $(BONUS_SERVICES)
 	@echo "✓ Bonus services are up and running"
 
 help:
@@ -80,4 +95,4 @@ help:
 	@echo "  make re       - Rebuild from scratch"
 	@echo "  make bonus    - Start bonus services"
 
-.PHONY: all build up down stop start restart logs clean fclean re bonus help
+.PHONY: all build up down stop start restart logs clean fclean re build_bonus bonus help

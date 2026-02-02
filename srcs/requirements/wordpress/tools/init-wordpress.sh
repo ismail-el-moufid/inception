@@ -1,20 +1,14 @@
 #!/bin/sh
-
-# Exit on error
 set -e
 
 # Required env vars
-: "${ADMIN_USER:?ADMIN_USER is required}"
-: "${ADMIN_PASSWORD:?ADMIN_PASSWORD is required}"
-: "${ADMIN_EMAIL:?ADMIN_EMAIL is required}"
-: "${NON_ADMIN_USER:?NON_ADMIN_USER is required}"
-: "${NON_ADMIN_PASSWORD:?NON_ADMIN_PASSWORD is required}"
-: "${SITE_URL:?SITE_URL is required}"
-: "${SITE_TITLE:?SITE_TITLE is required}"
-: "${DB_NAME:?DB_NAME is required}"
-: "${DB_USER:?DB_USER is required}"
-: "${DB_PASSWORD:?DB_PASSWORD is required}"
-: "${DB_HOST:?DB_HOST is required}"
+required_vars="HOST_UID HOST_GID ADMIN_USER ADMIN_PASSWORD ADMIN_EMAIL NON_ADMIN_USER NON_ADMIN_PASSWORD SITE_URL SITE_TITLE DB_NAME DB_USER DB_PASSWORD DB_HOST"
+for v in $required_vars; do
+	if [ -z "$(eval "printf '%s' \"\$$v\"")" ]; then
+		echo "$v is required" 1>&2
+		exit 1
+	fi
+done
 
 # Validate ADMIN_USER does not contain "admin"
 if echo "$ADMIN_USER" | grep -qi "admin"; then
@@ -22,16 +16,37 @@ if echo "$ADMIN_USER" | grep -qi "admin"; then
 	exit 1
 fi
 
+# Create user and group
+addgroup -g "${HOST_GID}" wordpress_group
+adduser -D -u "${HOST_UID}" -G wordpress_group -h "/var/www/html" -s /bin/ash wordpress_user
+
+if [ ! -d /var/www/html/wp-admin ]; then
+	echo "WordPress not found, installing..."
+
+	# Give ownership of /var/www/html and all its content to the wordpress user
+	chown -R ${HOST_UID}:${HOST_GID} /var/www/html
+
+	# Extract WordPress
+	su-exec ${HOST_UID}:${HOST_GID} tar -xzf /var/www/html/wordpress.tar.gz -C /var/www/html --strip-components=1
+
+	# Remove the tar file
+    rm -f /var/www/html/wordpress.tar.gz
+else
+	echo "WordPress found, skipping installation."
+fi
+
 # Symlink php83 to php for wp
-ln -sf $(which php83) /usr/local/bin/php
+ln -sf "$(which php83)" /usr/local/bin/php
+
+# helper to run wp as the wordpress user
+wp()
+{
+	su-exec ${HOST_UID}:${HOST_GID} wp --path="/var/www/html" "$@"
+}
 
 # WordPress Setup
-if ! su-exec wordpress:wordpress wp core is-installed; then
-
-	echo "Setting up WordPress..."
-
-	# Create admin and users
-	su-exec wordpress:wordpress wp core install \
+if ! wp core is-installed >/dev/null 2>&1; then
+	wp core install \
 		--url="$SITE_URL" \
 		--title="$SITE_TITLE" \
 		--admin_user="$ADMIN_USER" \
@@ -39,50 +54,27 @@ if ! su-exec wordpress:wordpress wp core is-installed; then
 		--admin_email="$ADMIN_EMAIL" \
 		--skip-email
 
-	su-exec wordpress:wordpress wp user create "$NON_ADMIN_USER" "${NON_ADMIN_USER}@example.com" \
+	wp user create "$NON_ADMIN_USER" "${NON_ADMIN_USER}@example.com" \
 		--role=author \
 		--user_pass="$NON_ADMIN_PASSWORD"
-else
-	echo "WordPress already set up. Skipping core install."
 fi
 
-# Redis Object Cache Setup
-if ! su-exec wordpress:wordpress wp plugin is-installed redis-cache; then
-	echo "Installing Redis Object Cache plugin..."
-	su-exec wordpress:wordpress wp plugin install redis-cache --activate
-else
-	echo "Redis plugin already installed."
+# Redis Cache Setup
+if ! wp plugin is-installed redis-cache >/dev/null 2>&1; then
+	wp plugin install redis-cache --activate
 fi
+# Attempt to enable redis
+wp redis enable >/dev/null 2>&1
 
-# Check if object cache is enabled, if not enable it
-if ! su-exec wordpress:wordpress wp redis status | grep -q "Status: Connected"; then
-	echo "Enabling Redis Object Cache..."
-	su-exec wordpress:wordpress wp redis enable
-else
-	echo "Redis Object Cache is already enabled and connected."
-fi
-
-# Remove inactive plugins
-inactive_plugins=$(su-exec wordpress:wordpress wp plugin list --status=inactive --field=name || true)
-if [ -n "$inactive_plugins" ]; then
-	echo "Removing inactive plugins: $inactive_plugins"
-	for plugin in $inactive_plugins; do
-		su-exec wordpress:wordpress wp plugin delete "$plugin" || true
+# Remove inactive plugins/themes
+for type in plugin theme; do
+	items=$(wp "$type" list --status=inactive --field=name 2>/dev/null)
+	if [ -n "$items" ]; then
+		for item in $items; do
+			wp "$type" delete "$item" >/dev/null 2>&1
 		done
-	else
-	echo "No inactive plugins to remove."
 	fi
-
-# Remove inactive themes
-inactive_themes=$(su-exec wordpress:wordpress wp theme list --status=inactive --field=name || true)
-if [ -n "$inactive_themes" ]; then
-	echo "Removing inactive themes: $inactive_themes"
-	for theme in $inactive_themes; do
-		su-exec wordpress:wordpress wp theme delete "$theme" || true
-	done
-else
-	echo "No inactive themes to remove."
-fi
+done
 
 # start php-fpm
 exec php-fpm83 -F
