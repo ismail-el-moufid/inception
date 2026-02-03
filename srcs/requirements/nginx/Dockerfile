@@ -2,7 +2,7 @@ FROM alpine:3.23.2
 
 RUN apk update && apk add --no-cache \
 	nginx=1.28.0-r8 \
-	openssl=3.5.4-r0
+	openssl=3.5.5-r0
 
 RUN mkdir -p /etc/nginx/ssl
 

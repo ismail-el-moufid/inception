@@ -18,8 +18,13 @@ done
 : "${SOCKET_NAME:=mysqld.sock}"
 
 #Create user and group
-addgroup -g "$HOST_GID" mariadb_group
-adduser -D -u "$HOST_UID" -G mariadb_group -h "/var/lib/mysql" -s /bin/ash mariadb_user
+if ! getent group mariadb_group >/dev/null 2>&1; then
+	addgroup -g "$HOST_GID" mariadb_group
+fi
+
+if ! id -u mariadb_user >/dev/null 2>&1; then
+	adduser -D -u "$HOST_UID" -G mariadb_group -h "/var/lib/mysql" -s /bin/ash mariadb_user
+fi
 
 # Ensure socket directory exists
 su-exec "$HOST_UID":"$HOST_GID" mkdir -p "$SOCKET_DIR"

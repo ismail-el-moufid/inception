@@ -17,8 +17,13 @@ if echo "$ADMIN_USER" | grep -qi "admin"; then
 fi
 
 # Create user and group
-addgroup -g "${HOST_GID}" wordpress_group
-adduser -D -u "${HOST_UID}" -G wordpress_group -h "/var/www/html" -s /bin/ash wordpress_user
+if ! getent group wordpress_group >/dev/null 2>&1; then
+    addgroup -g "${HOST_GID}" wordpress_group
+fi
+
+if ! id -u wordpress_user >/dev/null 2>&1; then
+	adduser -D -u "${HOST_UID}" -G wordpress_group -h "/var/www/html" -s /bin/ash wordpress_user
+fi
 
 if [ ! -d /var/www/html/wp-admin ]; then
 	echo "WordPress not found, installing..."
