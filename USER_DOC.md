@@ -29,9 +29,8 @@ make fclean
 
 Accessing the website and admin
 
-- Website URL: https://`DOMAIN_NAME` (value from [srcs/.env](srcs/.env))
-  - Example: `https://localhost` if DOMAIN_NAME is set accordingly.
-- Admin dashboard: https://`DOMAIN_NAME`/wp-admin
+- Website URL: [localhost](https://localhost).
+- Admin dashboard: [localhost/wp-admin](https://localhost/wp-admin)
   - Use WP_ADMIN_USER and WP_ADMIN_PASSWORD from [srcs/.env](srcs/.env)
   - Note: admin username in this project must not contain "admin" per subject rules.
 
@@ -40,16 +39,16 @@ Bonus services & admin tools
 - Note: Redis, Adminer, and the Docs site run by default.
 - Note: FTP and Dozzle are extra bonus services and are not started by the default `make`. Run `make bonus` to build and start them.
 - Adminer (database web UI)
-  - URL: https://`DOMAIN_NAME`/adminer.php
+  - URL: [localhost/adminer.php](https://localhost/adminer.php)
   - Use DB credentials from [srcs/.env](srcs/.env)
 - Dozzle (logs viewer)
-  - URL: [http://127.0.0.1:8081](http://127.0.0.1:8081)
+  - URL: [localhost:8081](http://localhost:8081)
   - Note: Dozzle is bound to localhost for security.
 - FTP (optional bonus)
-  - Host: 127.0.0.1 Port: 21
+  - Host: localhost Port: 21
   - Credentials: FTP_USER / FTP_PASSWORD from [srcs/.env](srcs/.env)
 - Docs site (static)
-  - URL: https://`DOMAIN_NAME`/Docs
+  - URL: [localhost/Docs](https://localhost/Docs)
 - Redis cache
   - Redis is used as WordPress object cache when enabled. Configuration comes from REDIS_HOST/REDIS_PORT in [srcs/.env](srcs/.env).
   - To check redis status: cd srcs && docker compose ps redis && docker compose logs redis

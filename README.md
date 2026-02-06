@@ -84,8 +84,8 @@ WP_NONCE_SALT=your_nonce_salt
    ```
 
 4. **Access the Site**  
-   - Website: [https://localhost](https://localhost)
-   - Admin Dashboard: [https://localhost/wp-admin](https://localhost/wp-admin)
+   - Website: [localhost](https://localhost)
+   - Admin Dashboard: [localhost/wp-admin](https://localhost/wp-admin)
 
 ## Additional Services (bonus)
 
@@ -93,20 +93,20 @@ WP_NONCE_SALT=your_nonce_salt
   - Purpose: object caching for WordPress (configured via REDIS_HOST/REDIS_PORT in srcs/.env).
   - How to start: included by default in the normal stack.
 - Adminer (DB management)
-  - Access: proxied via nginx at https://`DOMAIN_NAME`/adminer.php
+  - Access: proxied via nginx at [localhost/adminer.php](https://localhost/adminer.php)
   - Dockerfile: [srcs/requirements/bonus/adminer/Dockerfile](srcs/requirements/bonus/adminer/Dockerfile)
   - How to start: included by default in the normal stack.
 - Docs website (static)
-  - Access: proxied by nginx at https://`DOMAIN_NAME`/Docs
+  - Access: proxied by nginx at [localhost/Docs](https://localhost/Docs)
   - Content source: [srcs/requirements/bonus/docs](srcs/requirements/bonus/docs)
   - How to start: included by default in the normal stack.
 
 - Note: Dozzle (logs UI) and FTP are extra bonus services and are not started by the default `make`. Run `make bonus` to build and start them.
 - Dozzle (container logs UI)
-  - Access: bound to localhost only — [http://127.0.0.1:8081](http://127.0.0.1:8081)
+  - Access: bound to localhost only — [localhost:8081](http://localhost:8081)
   - Note: Dozzle requires running `make bonus` to build and start it.
 - FTP (optional)
-  - Access: 127.0.0.1:21 (passive port 10000). Intended for bonus usage and points; enable only if needed.
+  - Access: localhost:21 (passive port 10000). Intended for bonus usage and points; enable only if needed.
   - Note: FTP is a bonus service and requires running `make bonus` to build and start it.
 
 ## Resources

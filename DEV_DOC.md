@@ -123,10 +123,10 @@ Bonus services
 - Note: Dozzle and FTP are bonus services and are not started by the default `make`. Run `make bonus` to enable them.
 - Access points:
 - Redis: the WordPress container uses the REDIS_HOST/REDIS_PORT env vars (set in [srcs/.env](srcs/.env)). Use `docker exec -it redis redis-cli` for troubleshooting.
-  - Adminer: https://`DOMAIN_NAME`/adminer.php (nginx proxy)
-  - Docs static site: https://`DOMAIN_NAME`/Docs (nginx proxy)
-  - Dozzle: [http://127.0.0.1:8081](http://127.0.0.1:8081) (bound to localhost only)
-  - FTP: 127.0.0.1:21; uses wordpress volume as FTP home
+  - Adminer: [localhost/adminer.php](https://localhost/adminer.php) (nginx proxy)
+  - Docs static site: [localhost/Docs](https://localhost/Docs) (nginx proxy)
+  - Dozzle: [localhost:8081](http://localhost:8081) (bound to localhost only)
+  - FTP: localhost:21; uses wordpress volume as FTP home
 
 Debugging tips
 
