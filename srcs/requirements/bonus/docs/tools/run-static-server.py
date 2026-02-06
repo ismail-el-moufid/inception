@@ -35,5 +35,5 @@ def app(environ, start_response):
 
 # Run the server on port 80, logging requests to the console
 if __name__ == '__main__':
-	print("Starting static server on http://0.0.0.0:80")
+	print("Starting static server on http://0.0.0.0:80", flush=True)
 	serve(TransLogger(app, setup_console_handler=False), host='0.0.0.0', port=80)
