@@ -7,7 +7,8 @@ RUN apk update && apk add --no-cache \
 	python3=3.12.12-r0 \
 	py3-jinja2=3.1.6-r0 \
 	py3-waitress=3.0.2-r1 \
-	py3-markdown=3.10.0-r0
+	py3-markdown=3.10.0-r0 \
+	py3-paste=3.10.1-r1
 
 COPY index.md ./index.md
 
