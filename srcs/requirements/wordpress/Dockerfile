@@ -34,7 +34,7 @@ WORKDIR /var/www/html/
 RUN wget -O /usr/local/bin/wp https://github.com/wp-cli/wp-cli/releases/download/v2.12.0/wp-cli-2.12.0.phar && \
 	chmod +x /usr/local/bin/wp
 
-RUN wget -O /var/www/html/wordpress.tar.gz https://wordpress.org/wordpress-6.9.tar.gz
+RUN wget -O /var/www/html/wordpress.tar.gz https://wordpress.org/wordpress-6.9.1.tar.gz
 
 COPY tools/init-wordpress.sh /init-wordpress.sh
 RUN chmod +x /init-wordpress.sh
