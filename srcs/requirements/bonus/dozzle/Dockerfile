@@ -1,4 +1,4 @@
-FROM alpine:3.23.2 as builder
+FROM alpine:3.22.3 as builder
 
 COPY tools/dozzle /dozzle
 

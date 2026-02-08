@@ -1,11 +1,11 @@
-FROM alpine:3.23.2
+FROM alpine:3.22.3
 
 RUN apk update && apk add --no-cache \
-	php83=8.3.30-r0 \
-	php83-opcache=8.3.30-r0 \
-	php83-phar=8.3.30-r0 \
-	php83-session=8.3.30-r0 \
-	php83-mysqli=8.3.30-r0
+	php83=8.3.29-r0 \
+	php83-opcache=8.3.29-r0 \
+	php83-phar=8.3.29-r0 \
+	php83-session=8.3.29-r0 \
+	php83-mysqli=8.3.29-r0
 
 WORKDIR /var/www/html
 

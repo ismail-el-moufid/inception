@@ -1,4 +1,4 @@
-FROM alpine:3.23.2
+FROM alpine:3.22.3
 
 RUN apk update && apk add --no-cache \
 	pure-ftpd=1.0.52-r0
