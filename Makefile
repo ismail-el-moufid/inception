@@ -8,8 +8,8 @@ GID = $(shell id -g)
 
 # Prevent running services as root
 ifeq ($(UID),0)
-UID = 1000
-GID = 1000
+	UID = 1000
+	GID = 1000
 endif
 
 DOCKER_COMPOSE = HOST_UID=${UID} HOST_GID=${GID} docker compose
@@ -21,7 +21,6 @@ up: build
 	@echo "Creating volume directories..."
 	@mkdir -p "$(DATA_DIR)/mariadb"
 	@mkdir -p "$(DATA_DIR)/wordpress"
-	@cp README.md srcs/requirements/bonus/docs/index.md
 	@echo "starting Docker services..."
 	@cd srcs && ${DOCKER_COMPOSE} up -d $(MANDATORY_SERVICES)
 	@echo "✓ Services are up and running"
@@ -29,6 +28,7 @@ up: build
 # Build images without starting containers
 build:
 	@echo "Building Docker images..."
+	@cp README.md srcs/requirements/bonus/docs/index.md
 	@cd srcs && ${DOCKER_COMPOSE} build --parallel $(MANDATORY_SERVICES)
 	@echo "✓ Images built successfully"
 
@@ -69,6 +69,7 @@ re: fclean up
 
 build_bonus:
 	@echo "Building bonus service images..."
+	@cp README.md srcs/requirements/bonus/docs/index.md
 	@cd srcs && ${DOCKER_COMPOSE} build --parallel $(MANDATORY_SERVICES) $(BONUS_SERVICES)
 	@echo "✓ Bonus images built successfully"
 
@@ -76,7 +77,6 @@ bonus: build_bonus
 	@echo "Creating volume directories..."
 	@mkdir -p "$(DATA_DIR)/mariadb"
 	@mkdir -p "$(DATA_DIR)/wordpress"
-	@cp README.md srcs/requirements/bonus/docs/index.md
 	@echo "Starting bonus services..."
 	@cd srcs && ${DOCKER_COMPOSE} up -d $(MANDATORY_SERVICES) $(BONUS_SERVICES)
 	@echo "✓ Bonus services are up and running"
